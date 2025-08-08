@@ -1,4 +1,7 @@
 {
+  "engines": {
+    "node": "20.x"
+  },
   "name": "dyeing-backend",
   "version": "1.0.0",
   "type": "module",
