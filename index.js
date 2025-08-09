@@ -434,6 +434,81 @@ app.get('/api/batch/:id/items', (req, res) => {
   }
 });
 
+// Export batches as CSV
+app.get('/api/batches/export/csv', (req, res) => {
+  try {
+    const batches = db.prepare(`
+      SELECT 
+        b.id, c.name as Company, b.lot_number as LotNumber, b.in_time as InTime, 
+        b.out_time as ExitTime, b.exit_notes as ExitType, b.transport_type as Vehicle, 
+        b.vehicle_registration as ReceivedTI, m.name as Mediator, d.name as Destination
+      FROM batches b
+      LEFT JOIN companies c ON b.company_id = c.id
+      LEFT JOIN mediators m ON b.mediator_id = m.id
+      LEFT JOIN destinations d ON b.destination_id = d.id
+      ORDER BY b.in_time DESC
+    `).all();
+
+    // Helper to escape CSV fields
+    const escapeCSV = value =>
+      `"${String(value ?? '').replace(/"/g, '""')}"`;
+
+    // Prepare CSV header
+    const header = [
+      'Company', 'LotNumber', 'InTime', 'ExitTime', 'ExitType', 'Vehicle', 'ReceivedTI', 'Mediator', 'Destination'
+    ];
+    const rows = batches.map(row =>
+      header.map(col => escapeCSV(row[col])).join(',')
+    );
+    const csv = [header.join(','), ...rows].join('\r\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=\"batches.csv\"');
+    res.send(csv);
+  } catch (error) {
+    console.error('Error exporting CSV:', error);
+    res.status(500).json({ error: 'Error exporting CSV' });
+  }
+});
+
+
+// Export batches as CSV
+app.get('/api/batches/export/csv', (req, res) => {
+  try {
+    const batches = db.prepare(`
+      SELECT 
+        b.id, c.name as Company, b.lot_number as LotNumber, b.in_time as InTime, 
+        b.out_time as ExitTime, b.exit_notes as ExitType, b.transport_type as Vehicle, 
+        b.vehicle_registration as ReceivedTI, m.name as Mediator, d.name as Destination
+      FROM batches b
+      LEFT JOIN companies c ON b.company_id = c.id
+      LEFT JOIN mediators m ON b.mediator_id = m.id
+      LEFT JOIN destinations d ON b.destination_id = d.id
+      ORDER BY b.in_time DESC
+    `).all();
+
+    // Helper to escape CSV fields
+    const escapeCSV = value =>
+      `"${String(value ?? '').replace(/"/g, '""')}"`;
+
+    // Prepare CSV header
+    const header = [
+      'Company', 'LotNumber', 'InTime', 'ExitTime', 'ExitType', 'Vehicle', 'ReceivedTI', 'Mediator', 'Destination'
+    ];
+    const rows = batches.map(row =>
+      header.map(col => escapeCSV(row[col])).join(',')
+    );
+    const csv = [header.join(','), ...rows].join('\r\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="batches.csv"');
+    res.send(csv);
+  } catch (error) {
+    console.error('Error exporting CSV:', error);
+    res.status(500).json({ error: 'Error exporting CSV' });
+  }
+});
+
 const PORT = 4000;
 app.listen(PORT, () => {
   console.log(`Backend running on port ${PORT}`);
@@ -442,4 +517,5 @@ app.listen(PORT, () => {
   console.log('- POST /api/batch/:id/exit');
   console.log('- GET /api/destinations');
   console.log('- POST /api/destinations');
+  console.log('- GET /api/batches/export/csv');
 });
